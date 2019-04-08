@@ -9,6 +9,8 @@
 #import "FIAPRequestHandler.h"
 #import "FIAPaymentQueueHandler.h"
 
+const NSString *DOWNLOAD_OPERATION_START = @"SKDownloadOperation.start";
+
 @interface InAppPurchasePlugin ()
 
 // Holding strong references to FIAPRequestHandlers. Remove the handlers from the set after
@@ -93,6 +95,8 @@
     [self retrieveReceiptData:call result:result];
   } else if ([@"-[InAppPurchasePlugin refreshReceipt:result:]" isEqualToString:call.method]) {
     [self refreshReceipt:call result:result];
+  } else if ([@"-[InAppPurchasePlugin updateDownloads:result:]" isEqualToString:call.method]) {
+    NSLog(@"%@", call.arguments);
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -262,6 +266,9 @@
     result(nil);
     [weakSelf.requestHandlers removeObject:handler];
   }];
+}
+
+- (void)updateDownloads:(FlutterMethodCall *)call result:(FlutterResult)result {
 }
 
 #pragma mark - delegates

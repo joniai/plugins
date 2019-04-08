@@ -7,6 +7,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef enum : NSUInteger {
+  FIAPDownloadOperationStart,
+  FIAPDownloadOperationPause,
+  FIAPDownloadOperationResume,
+  FIAPDownloadOperationCancel
+} FIAPDownloadOperation;
+
 typedef void (^TransactionsUpdated)(NSArray<SKPaymentTransaction *> *transactions);
 typedef void (^TransactionsRemoved)(NSArray<SKPaymentTransaction *> *transactions);
 typedef void (^RestoreTransactionFailed)(NSError *error);
@@ -30,6 +37,7 @@ typedef void (^UpdatedDownloads)(NSArray<SKDownload *> *downloads);
 // Can throw exceptions if the transaction type is purchasing, should always used in a @try block.
 - (void)finishTransaction:(nonnull SKPaymentTransaction *)transaction;
 - (void)restoreTransactions:(nullable NSString *)applicationName;
+- (void)updateDownloads:(nonnull NSArray *)downloads operation:(FIAPDownloadOperation)operation;
 
 @end
 

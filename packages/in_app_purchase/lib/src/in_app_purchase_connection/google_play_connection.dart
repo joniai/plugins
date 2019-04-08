@@ -8,6 +8,8 @@ import 'package:flutter/widgets.dart';
 import '../../billing_client_wrappers.dart';
 import 'in_app_purchase_connection.dart';
 import 'product_details.dart';
+import 'package:in_app_purchase/src/store_kit_wrappers/sk_download_wrapper.dart';
+import 'package:in_app_purchase/src/store_kit_wrappers/sk_payment_queue_wrapper.dart';
 
 /// An [InAppPurchaseConnection] that wraps Google Play Billing.
 ///
@@ -59,6 +61,9 @@ class GooglePlayConnection
   Stream<List<PurchaseDetails>> get purchaseUpdatedStream =>
       _purchaseUpdatedController.stream;
   static StreamController<List<PurchaseDetails>> _purchaseUpdatedController;
+
+  Stream<List<SKDownloadWrapper>> get downloadStream => throw UnsupportedError(
+      'Download store hosted content is only supported on iOS.');
 
   @visibleForTesting
   final BillingClient billingClient;
@@ -169,6 +174,13 @@ class GooglePlayConnection
   Future<PurchaseVerificationData> refreshPurchaseVerificationData() async {
     throw Exception(
         'The method <refreshPurchaseVerificationData> only works on iOS.');
+  }
+
+  @override
+  Future<void> updateDownloads(
+      {@required List<SKDownloadWrapper> downloads,
+      @required SKDownloadOperation operation}) {
+    throw Exception('The method <updateDownloads> only works on iOS.');
   }
 
   @override

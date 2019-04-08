@@ -69,6 +69,109 @@ class SKPaymentQueueWrapper {
     );
   }
 
+  /// Start downloading the contents after user purchased the them from [App Store Connect](https://appstoreconnect.apple.com/login).
+  ///
+  /// The download object to be inserted to the queue must be associated with a [SKTransactionWrapper] that has been successfully purchased, but not yet finished.
+  /// This method does not return the status of the download process directly, instead it delegates the download updates to [SKTransactionObserverWrapper.updatedDownloads].
+  /// Finish your transaction by calling [finishTransaction] after the [SKDownloadWrapper.state] of the download object is [SKDownloadState.finished].
+  ///
+  /// Update your UI to indicate the start of the download process.
+  ///
+  /// This method calls StoreKit's [`-[SKPaymentQueue startDownloads:]`](https://developer.apple.com/documentation/storekit/skpaymentqueue/1505998-startdownloads?language=objc).
+  /// See also
+  ///
+  ///  * [pauseDownloads]
+  ///  * [resumeDownloads]
+  ///  * [cancelDownloads]
+  Future<void> startDownloads(List<SKDownloadWrapper> downloads) async {
+    assert(downloads != null);
+    await channel.invokeMethod(
+      '-[InAppPurchasePlugin updateDownloads:result:]',
+      {
+        'downloads': downloads.map((SKDownloadWrapper download) {
+          return download.contentIdentifier;
+        }).toList(),
+        "operation": SKDownloadOperation.start.toString()
+      },
+    );
+  }
+
+  /// Pause the download process after the [SKDownloadWrapper] objects have started.
+  ///
+  /// Resume your download process by calling [resumeDownloads].
+  /// This method does not return the status of the download process directly, instead it delegates the download updates to [SKTransactionObserverWrapper.updatedDownloads].
+  ///
+  /// Update your UI to indicate the download has been paused.
+  ///
+  /// This method calls StoreKit's [`-[SKPaymentQueue pauseDownloads:]`](https://developer.apple.com/documentation/storekit/skpaymentqueue/1506053-pausedownloads?language=objc).
+  /// See also
+  ///
+  ///  * [startDownloads]
+  ///  * [resumeDownloads]
+  ///  * [cancelDownloads]
+  Future<void> pauseDownloads(List<SKDownloadWrapper> downloads) async {
+    assert(downloads != null);
+    await channel.invokeMethod(
+      '-[InAppPurchasePlugin updateDownloads:result:]',
+      {
+        'downloads': downloads.map((SKDownloadWrapper download) {
+          return download.contentIdentifier;
+        }).toList(),
+        "operation": SKDownloadOperation.pause.toString()
+      },
+    );
+  }
+
+  /// Resume download process after [SKDownloadWrapper] objects have paused by [pauseDownloads].
+  ///
+  /// This method does not return the status of the download process directly, instead it delegates the download updates to [SKTransactionObserverWrapper.updatedDownloads].
+  ///
+  /// Update your UI to indicate the paused download has been resumed.
+  ///
+  /// This method calls StoreKit's [`-[SKPaymentQueue resumeDownloads:]`](https://developer.apple.com/documentation/storekit/skpaymentqueue/1506096-resumedownloads?language=objc).
+  /// See also
+  ///
+  ///  * [pauseDownloads]
+  ///  * [startDownloads]
+  ///  * [cancelDownloads]
+  Future<void> resumeDownloads(List<SKDownloadWrapper> downloads) async {
+    assert(downloads != null);
+    await channel.invokeMethod(
+      '-[InAppPurchasePlugin updateDownloads:result:]',
+      {
+        'downloads': downloads.map((SKDownloadWrapper download) {
+          return download.contentIdentifier;
+        }).toList(),
+        "operation": SKDownloadOperation.resume.toString()
+      },
+    );
+  }
+
+  /// Removes download objects from the queue.
+  ///
+  /// This method does not return the status of the download process directly, instead it delegates the download updates to [SKTransactionObserverWrapper.updatedDownloads].
+  ///
+  /// Update your UI to indicate the paused download has been resumed.
+  ///
+  /// This method calls StoreKit's [`-[SKPaymentQueue cancelDownloads:]`](https://developer.apple.com/documentation/storekit/skpaymentqueue/1506092-canceldownloads?language=objc).
+  /// See also
+  ///
+  ///  * [pauseDownloads]
+  ///  * [resumeDownloads]
+  ///  * [startDownloads]
+  Future<void> cancelDownloads(List<SKDownloadWrapper> downloads) async {
+    assert(downloads != null);
+    await channel.invokeMethod(
+      '-[InAppPurchasePlugin updateDownloads:result:]',
+      {
+        'downloads': downloads.map((SKDownloadWrapper download) {
+          return download.contentIdentifier;
+        }).toList(),
+        "operation": SKDownloadOperation.cancel.toString()
+      },
+    );
+  }
+
   /// Finishes a transaction and removes it from the queue.
   ///
   /// This method should be called from an [SKTransactionObserverWrapper] callback when receiving notification from the payment queue. You should only
@@ -299,4 +402,26 @@ class SKPaymentWrapper {
 
   @override
   String toString() => _$SKPaymentWrapperToJson(this).toString();
+}
+
+/// The download operations to be performed.
+///
+/// See also:
+///
+/// * [SKPaymentQueueWrapper.startDownloads]
+/// * [SKPaymentQueueWrapper.pauseDownloads]
+/// * [SKPaymentQueueWrapper.resumeDownloads]
+/// * [SKPaymentQueueWrapper.cancelDownloads]
+enum SKDownloadOperation {
+  @JsonValue(0)
+  start,
+
+  @JsonValue(1)
+  pause,
+
+  @JsonValue(2)
+  resume,
+
+  @JsonValue(3)
+  cancel,
 }

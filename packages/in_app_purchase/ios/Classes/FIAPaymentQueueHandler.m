@@ -60,6 +60,25 @@
   }
 }
 
+- (void)updateDownloads:(nonnull NSArray *)downloads operation:(FIAPDownloadOperation)operation {
+  switch (operation) {
+    case FIAPDownloadOperationStart:
+      [self.queue startDownloads:downloads];
+      break;
+    case FIAPDownloadOperationPause:
+      [self.queue pauseDownloads:downloads];
+      break;
+    case FIAPDownloadOperationResume:
+      [self.queue resumeDownloads:downloads];
+      break;
+    case FIAPDownloadOperationCancel:
+      [self.queue cancelDownloads:downloads];
+      break;
+    default:
+      break;
+  }
+}
+
 #pragma mark - observing
 // Sent when the transaction array has changed (additions or state changes).  Client should check
 // state of transactions and finish as appropriate.

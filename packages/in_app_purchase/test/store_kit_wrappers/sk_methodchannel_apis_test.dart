@@ -110,6 +110,46 @@ void main() {
       await queue.restoreTransactions(applicationUserName: 'aUserID');
       expect(fakeIOSPlatform.applicationNameHasTransactionRestored, 'aUserID');
     });
+
+    test('should start download', () async {
+      SKPaymentQueueWrapper queue = SKPaymentQueueWrapper();
+      TestPaymentTransactionObserver observer =
+          TestPaymentTransactionObserver();
+      queue.setTransactionObserver(observer);
+      await queue.startDownloads([dummyDownload]);
+      expect(fakeIOSPlatform.downloads.first, dummyDownload.contentIdentifier);
+      expect(fakeIOSPlatform.downloadOperation, 'SKDownloadOperation.start');
+    });
+
+    test('should pause downloads', () async {
+      SKPaymentQueueWrapper queue = SKPaymentQueueWrapper();
+      TestPaymentTransactionObserver observer =
+          TestPaymentTransactionObserver();
+      queue.setTransactionObserver(observer);
+      await queue.pauseDownloads([dummyDownload]);
+      expect(fakeIOSPlatform.downloads.first, dummyDownload.contentIdentifier);
+      expect(fakeIOSPlatform.downloadOperation, 'SKDownloadOperation.pause');
+    });
+
+    test('should resume downloads', () async {
+      SKPaymentQueueWrapper queue = SKPaymentQueueWrapper();
+      TestPaymentTransactionObserver observer =
+          TestPaymentTransactionObserver();
+      queue.setTransactionObserver(observer);
+      await queue.resumeDownloads([dummyDownload]);
+      expect(fakeIOSPlatform.downloads.first, dummyDownload.contentIdentifier);
+      expect(fakeIOSPlatform.downloadOperation, 'SKDownloadOperation.resume');
+    });
+
+    test('should cancel downloads', () async {
+      SKPaymentQueueWrapper queue = SKPaymentQueueWrapper();
+      TestPaymentTransactionObserver observer =
+          TestPaymentTransactionObserver();
+      queue.setTransactionObserver(observer);
+      await queue.cancelDownloads([dummyDownload]);
+      expect(fakeIOSPlatform.downloads.first, dummyDownload.contentIdentifier);
+      expect(fakeIOSPlatform.downloadOperation, 'SKDownloadOperation.cancel');
+    });
   });
 }
 
@@ -130,6 +170,8 @@ class FakeIOSPlatform {
   List<SKPaymentWrapper> payments = [];
   List<String> transactionsFinished = [];
   String applicationNameHasTransactionRestored;
+  List<dynamic> downloads = [];
+  String downloadOperation;
 
   Future<dynamic> onMethodCall(MethodCall call) {
     switch (call.method) {
@@ -162,6 +204,10 @@ class FakeIOSPlatform {
         return Future<void>.sync(() {});
       case '-[InAppPurchasePlugin restoreTransactions:result:]':
         applicationNameHasTransactionRestored = call.arguments;
+        return Future<void>.sync(() {});
+      case '-[InAppPurchasePlugin updateDownloads:result:]':
+        downloads = call.arguments['downloads'];
+        downloadOperation = call.arguments['operation'];
         return Future<void>.sync(() {});
     }
     return Future<void>.sync(() {});

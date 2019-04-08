@@ -25,6 +25,9 @@ class AppStoreConnection implements InAppPurchaseConnection {
   Stream<List<PurchaseDetails>> get purchaseUpdatedStream =>
       _observer.purchaseUpdatedController.stream;
 
+  Stream<List<SKDownloadWrapper>> get downloadStream =>
+      _observer.downloadStreamController.stream;
+
   static SKTransactionObserverWrapper get observer => _observer;
 
   static AppStoreConnection _getOrCreateInstance() {
@@ -34,7 +37,9 @@ class AppStoreConnection implements InAppPurchaseConnection {
 
     _instance = AppStoreConnection();
     _skPaymentQueueWrapper = SKPaymentQueueWrapper();
-    _observer = _TransactionObserver(StreamController.broadcast());
+    _observer = _TransactionObserver(
+        purchaseUpdatedController: StreamController.broadcast(),
+        downloadStreamController: StreamController.broadcast());
     _skPaymentQueueWrapper.setTransactionObserver(observer);
     return _instance;
   }
@@ -137,16 +142,39 @@ class AppStoreConnection implements InAppPurchaseConnection {
     );
     return productDetailsResponse;
   }
+
+  @override
+  Future<void> updateDownloads(
+      {@required List<SKDownloadWrapper> downloads,
+      @required SKDownloadOperation operation}) {
+    assert(downloads != null);
+    assert(operation != null);
+    switch (operation) {
+      case SKDownloadOperation.start:
+        return _skPaymentQueueWrapper.startDownloads(downloads);
+      case SKDownloadOperation.pause:
+        return _skPaymentQueueWrapper.pauseDownloads(downloads);
+      case SKDownloadOperation.resume:
+        return _skPaymentQueueWrapper.resumeDownloads(downloads);
+      case SKDownloadOperation.cancel:
+        return _skPaymentQueueWrapper.cancelDownloads(downloads);
+      default:
+        throw UnsupportedError(
+            '$operation is not one of the values in $SKDownloadOperation');
+    }
+  }
 }
 
 class _TransactionObserver implements SKTransactionObserverWrapper {
   final StreamController<List<PurchaseDetails>> purchaseUpdatedController;
+  final StreamController<List<SKDownloadWrapper>> downloadStreamController;
 
   Completer<List<SKPaymentTransactionWrapper>> _restoreCompleter;
   List<SKPaymentTransactionWrapper> _restoredTransactions;
   String _receiptData;
 
-  _TransactionObserver(this.purchaseUpdatedController);
+  _TransactionObserver(
+      {this.purchaseUpdatedController, this.downloadStreamController});
 
   Future<List<SKPaymentTransactionWrapper>> getRestoredTransactions(
       {@required SKPaymentQueueWrapper queue, String applicationUserName}) {
@@ -205,7 +233,9 @@ class _TransactionObserver implements SKTransactionObserverWrapper {
     _restoreCompleter.complete(_restoredTransactions);
   }
 
-  void updatedDownloads({List<SKDownloadWrapper> downloads}) {}
+  void updatedDownloads({List<SKDownloadWrapper> downloads}) {
+    downloadStreamController.add(downloads);
+  }
 
   bool shouldAddStorePayment(
       {SKPaymentWrapper payment, SKProductWrapper product}) {

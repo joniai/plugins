@@ -219,6 +219,37 @@ abstract class InAppPurchaseConnection {
     return _purchaseUpdatedStream;
   }
 
+  /// Listen to this broadcast stream to get real time update for downloading App Store Connect hosted contents.
+  ///
+  /// You only need to listen to this stream if you choose to host your downloadable contents on App Store Connect. This functionality
+  /// is only available on iOS. Listening to this stream on Android throws an [UnsupportedError].
+  ///
+  /// This stream would never close when the APP is active.
+  ///
+  /// IMPORTANT! To Avoid losing information on download updates, You should listen to this stream as soon as your APP launches, preferably before returning your main App Widget in main().
+  /// We recommend to have a single subscription listening to the stream at a given time. If you choose to have multiple subscription at the same time, you should be careful at the fact that each subscription will receive all the events after they start to listen.
+  ///
+  /// See also
+  /// * [updateDownloads] for start, pause, resume, or cancel a download.
+  /// * [SKDownloadWrapper] for information of the download object, such as the progress of the download process.
+  Stream<List<SKDownloadWrapper>> get downloadStream => _getDownloadStream();
+
+  Stream<List<SKDownloadWrapper>> _downloadStream;
+
+  Stream<List<SKDownloadWrapper>> _getDownloadStream() {
+    if (_downloadStream != null) {
+      return _downloadStream;
+    }
+
+    if (Platform.isIOS) {
+      _downloadStream = AppStoreConnection.instance.downloadStream;
+    } else {
+      throw UnsupportedError(
+          'Download store hosted content is only supported on iOS.');
+    }
+    return _downloadStream;
+  }
+
   /// Returns true if the payment platform is ready and available.
   Future<bool> isAvailable();
 
@@ -314,6 +345,11 @@ abstract class InAppPurchaseConnection {
   ///
   /// Throws an [Exception] on Android.
   Future<PurchaseVerificationData> refreshPurchaseVerificationData();
+
+  /// Updates a list of download objects with a [SKDownloadOperation].
+  Future<void> updateDownloads(
+      {@required List<SKDownloadWrapper> downloads,
+      @required SKDownloadOperation operation});
 
   /// The [InAppPurchaseConnection] implemented for this platform.
   ///

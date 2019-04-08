@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase_connection.dart';
+import 'package:in_app_purchase/store_kit_wrappers.dart';
 
 void main() {
   runApp(MyApp());
@@ -68,6 +69,20 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    InAppPurchaseConnection.instance.updateDownloads(downloads: [
+      SKDownloadWrapper(
+        contentIdentifier: 'id',
+        state: SKDownloadState.failed,
+        contentLength: 32,
+        contentURL: 'https://download.com',
+        contentVersion: '0.0.1',
+        transactionID: 'tranID',
+        progress: 0.6,
+        timeRemaining: 1231231,
+        downloadTimeUnknown: false,
+        error: null,
+      )
+    ], operation: SKDownloadOperation.start);
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
