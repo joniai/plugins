@@ -17,6 +17,8 @@
 
 @property(strong, nonatomic) NSMutableDictionary *transactionsSetter;
 
+@property(strong, nonatomic) NSMutableDictionary *downloads;
+
 @end
 
 @implementation FIAPaymentQueueHandler
@@ -60,19 +62,25 @@
   }
 }
 
-- (void)updateDownloads:(nonnull NSArray *)downloads operation:(FIAPDownloadOperation)operation {
+- (void)updateDownloads:(nonnull NSArray<NSString *> *)downloadIDs operation:(FIAPDownloadOperation)operation {
+  NSMutableArray *activeDownloadObjects = [NSMutableArray new];
+  for (NSString *downloadID in downloadIDs) {
+    if (self.downloads[downloadID]) {
+      [activeDownloadObjects addObject:self.downloads[downloadID]];
+    }
+  }
   switch (operation) {
     case FIAPDownloadOperationStart:
-      [self.queue startDownloads:downloads];
+      [self.queue startDownloads:activeDownloadObjects];
       break;
     case FIAPDownloadOperationPause:
-      [self.queue pauseDownloads:downloads];
+      [self.queue pauseDownloads:activeDownloadObjects];
       break;
     case FIAPDownloadOperationResume:
-      [self.queue resumeDownloads:downloads];
+      [self.queue resumeDownloads:activeDownloadObjects];
       break;
     case FIAPDownloadOperationCancel:
-      [self.queue cancelDownloads:downloads];
+      [self.queue cancelDownloads:activeDownloadObjects];
       break;
     default:
       break;
@@ -87,6 +95,9 @@
   for (SKPaymentTransaction *transaction in transactions) {
     if (transaction.transactionIdentifier) {
       [self.transactionsSetter setObject:transaction forKey:transaction.transactionIdentifier];
+    }
+    for (SKDownload *download in transaction.downloads) {
+      [self.downloads setObject:download forKey:download.contentIdentifier];
     }
   }
   // notify dart through callbacks.
@@ -128,6 +139,13 @@
 
 - (NSDictionary *)transactions {
   return self.transactionsSetter;
+}
+
+- (NSMutableDictionary *)downloads {
+  if (!_downloads) {
+    _downloads = [NSMutableDictionary new];
+  }
+  return _downloads;
 }
 
 @end

@@ -96,7 +96,7 @@ const NSString *DOWNLOAD_OPERATION_START = @"SKDownloadOperation.start";
   } else if ([@"-[InAppPurchasePlugin refreshReceipt:result:]" isEqualToString:call.method]) {
     [self refreshReceipt:call result:result];
   } else if ([@"-[InAppPurchasePlugin updateDownloads:result:]" isEqualToString:call.method]) {
-    NSLog(@"%@", call.arguments);
+    [self updateDownloads:call result:result];
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -269,6 +269,28 @@ const NSString *DOWNLOAD_OPERATION_START = @"SKDownloadOperation.start";
 }
 
 - (void)updateDownloads:(FlutterMethodCall *)call result:(FlutterResult)result {
+  NSString *operation = call.arguments[@"operation"];
+  NSArray *downloads = call.arguments[@"downloads"];
+  if (![operation isKindOfClass:[NSString class]]) {
+    @throw [NSException exceptionWithName:@"update_download_invalid_argument" reason:@"invalid argument sent to -[InAppPurchasePlugin updateDownloads:result:], `operation` must be a string" userInfo:nil];
+  }
+  if (![downloads isKindOfClass:[NSArray class]]) {
+    @throw [NSException exceptionWithName:@"update_download_invalid_argument" reason:@"invalid argument sent to -[InAppPurchasePlugin updateDownloads:result:], `downloads` must be a list" userInfo:nil];
+  }
+  FIAPDownloadOperation downloadOperation;
+  if ([operation isEqualToString:@"SKDownloadOperation.start"]) {
+    downloadOperation = FIAPDownloadOperationStart;
+  } else if ([operation isEqualToString:@"SKDownloadOperation.pause"]) {
+    downloadOperation = FIAPDownloadOperationPause;
+  } else if ([operation isEqualToString:@"SKDownloadOperation.resume"]) {
+    downloadOperation = FIAPDownloadOperationResume;
+  } else if ([operation isEqualToString:@"SKDownloadOperation.cancel"]) {
+    downloadOperation = FIAPDownloadOperationCancel;
+  } else {
+    @throw [NSException exceptionWithName:@"update_download_invalid_argument" reason:[NSString stringWithFormat:@"invalid argument sent to -[InAppPurchasePlugin updateDownloads:result:], %@ is not a valid operation", operation] userInfo:nil];
+  }
+  [self.paymentQueueHandler updateDownloads:downloads operation:downloadOperation];
+  result(nil);
 }
 
 #pragma mark - delegates

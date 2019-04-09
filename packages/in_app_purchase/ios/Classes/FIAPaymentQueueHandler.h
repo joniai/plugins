@@ -37,7 +37,7 @@ typedef void (^UpdatedDownloads)(NSArray<SKDownload *> *downloads);
 // Can throw exceptions if the transaction type is purchasing, should always used in a @try block.
 - (void)finishTransaction:(nonnull SKPaymentTransaction *)transaction;
 - (void)restoreTransactions:(nullable NSString *)applicationName;
-- (void)updateDownloads:(nonnull NSArray *)downloads operation:(FIAPDownloadOperation)operation;
+- (void)updateDownloads:(nonnull NSArray<NSString *> *)downloadIDs operation:(FIAPDownloadOperation)operation;
 
 @end
 
