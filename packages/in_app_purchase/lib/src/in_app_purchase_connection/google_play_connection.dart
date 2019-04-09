@@ -127,7 +127,7 @@ class GooglePlayConnection
   Future<void> updateDownloads(
       {@required List<SKDownloadWrapper> downloads,
       @required SKDownloadOperation operation}) {
-    throw Exception('The method <updateDownloads> only works on iOS.');
+    throw UnsupportedError('The method <updateDownloads> only works on iOS.');
   }
 
   @override

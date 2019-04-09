@@ -13,6 +13,7 @@ import 'package:in_app_purchase/billing_client_wrappers.dart';
 import 'package:in_app_purchase/src/billing_client_wrappers/enum_converters.dart';
 import 'package:in_app_purchase/src/in_app_purchase_connection/google_play_connection.dart';
 import 'package:in_app_purchase/src/channel.dart';
+import 'package:in_app_purchase/store_kit_wrappers.dart';
 import '../stub_in_app_purchase_platform.dart';
 import 'package:in_app_purchase/src/in_app_purchase_connection/product_details.dart';
 import '../billing_client_wrappers/sku_details_wrapper_test.dart';
@@ -345,6 +346,12 @@ void main() {
   group('complete purchase', () {
     test('calling complete purchase on android should throw', () async {
       expect(() => connection.completePurchase(null), throwsUnsupportedError);
+    });
+  });
+
+  group('downloads', () {
+    test('start download', () async {
+      expect(() => connection.updateDownloads(downloads:[], operation: SKDownloadOperation.start), throwsUnsupportedError);
     });
   });
 }
