@@ -351,7 +351,10 @@ void main() {
 
   group('downloads', () {
     test('start download', () async {
-      expect(() => connection.updateDownloads(downloads:[], operation: SKDownloadOperation.start), throwsUnsupportedError);
+      expect(
+          () => connection.updateDownloads(
+              downloads: [], operation: SKDownloadOperation.start),
+          throwsUnsupportedError);
     });
   });
 }

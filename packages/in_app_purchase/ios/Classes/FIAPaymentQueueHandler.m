@@ -62,7 +62,8 @@
   }
 }
 
-- (void)updateDownloads:(nonnull NSArray<NSString *> *)downloadIDs operation:(FIAPDownloadOperation)operation {
+- (void)updateDownloads:(nonnull NSArray<NSString *> *)downloadIDs
+              operation:(FIAPDownloadOperation)operation {
   NSMutableArray *activeDownloadObjects = [NSMutableArray new];
   for (NSString *downloadID in downloadIDs) {
     if (self.downloads[downloadID]) {

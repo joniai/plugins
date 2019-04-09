@@ -272,10 +272,16 @@ const NSString *DOWNLOAD_OPERATION_START = @"SKDownloadOperation.start";
   NSString *operation = call.arguments[@"operation"];
   NSArray *downloads = call.arguments[@"downloads"];
   if (![operation isKindOfClass:[NSString class]]) {
-    @throw [NSException exceptionWithName:@"update_download_invalid_argument" reason:@"invalid argument sent to -[InAppPurchasePlugin updateDownloads:result:], `operation` must be a string" userInfo:nil];
+    @throw [NSException exceptionWithName:@"update_download_invalid_argument"
+                                   reason:@"invalid argument sent to -[InAppPurchasePlugin "
+                                          @"updateDownloads:result:], `operation` must be a string"
+                                 userInfo:nil];
   }
   if (![downloads isKindOfClass:[NSArray class]]) {
-    @throw [NSException exceptionWithName:@"update_download_invalid_argument" reason:@"invalid argument sent to -[InAppPurchasePlugin updateDownloads:result:], `downloads` must be a list" userInfo:nil];
+    @throw [NSException exceptionWithName:@"update_download_invalid_argument"
+                                   reason:@"invalid argument sent to -[InAppPurchasePlugin "
+                                          @"updateDownloads:result:], `downloads` must be a list"
+                                 userInfo:nil];
   }
   FIAPDownloadOperation downloadOperation;
   if ([operation isEqualToString:@"SKDownloadOperation.start"]) {
@@ -287,7 +293,13 @@ const NSString *DOWNLOAD_OPERATION_START = @"SKDownloadOperation.start";
   } else if ([operation isEqualToString:@"SKDownloadOperation.cancel"]) {
     downloadOperation = FIAPDownloadOperationCancel;
   } else {
-    @throw [NSException exceptionWithName:@"update_download_invalid_argument" reason:[NSString stringWithFormat:@"invalid argument sent to -[InAppPurchasePlugin updateDownloads:result:], %@ is not a valid operation", operation] userInfo:nil];
+    @throw [NSException
+        exceptionWithName:@"update_download_invalid_argument"
+                   reason:[NSString stringWithFormat:
+                                        @"invalid argument sent to -[InAppPurchasePlugin "
+                                        @"updateDownloads:result:], %@ is not a valid operation",
+                                        operation]
+                 userInfo:nil];
   }
   [self.paymentQueueHandler updateDownloads:downloads operation:downloadOperation];
   result(nil);

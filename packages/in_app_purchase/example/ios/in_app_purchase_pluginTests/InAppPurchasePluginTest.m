@@ -203,4 +203,22 @@
   XCTAssertTrue(result);
 }
 
+- (void)testDownload {
+  XCTestExpectation* expectation = [self expectationWithDescription:@"expect success"];
+  FlutterMethodCall* call =
+      [FlutterMethodCall methodCallWithMethodName:@"-[InAppPurchasePlugin updateDownloads:result:]"
+                                        arguments:@{
+                                          @"downloads" : @[ @"A" ],
+                                          @"operation" : @"SKDownloadOperation.start"
+                                        }];
+  __block BOOL result = NO;
+  [self.plugin handleMethodCall:call
+                         result:^(id r) {
+                           result = YES;
+                           [expectation fulfill];
+                         }];
+  [self waitForExpectations:@[ expectation ] timeout:5];
+  XCTAssertTrue(result);
+}
+
 @end
