@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/src/in_app_purchase_connection/purchase_details.dart';
@@ -16,7 +17,7 @@ import 'package:in_app_purchase/store_kit_wrappers.dart';
 import '../store_kit_wrappers/sk_test_stub_objects.dart';
 
 void main() {
-  final FakeIOSPlatform fakeIOSPlatform = FakeIOSPlatform();
+  final _FakeIOSPlatform fakeIOSPlatform = _FakeIOSPlatform();
 
   setUpAll(() {
     SystemChannels.platform
@@ -253,10 +254,172 @@ void main() {
           throwsUnsupportedError);
     });
   });
+
+  group('downloads', () {
+    test('start download', () async {
+      Map<String, SKDownloadWrapper> downloadsResult = Map();
+      Completer firstCompleter = Completer();
+      Completer activeCompleter = Completer();
+      Completer finishCompleter = Completer();
+      Stream<List<SKDownloadWrapper>> stream =
+          AppStoreConnection.instance.downloadStream;
+
+      StreamSubscription subscription;
+      subscription = stream.listen((downloadList) {
+        downloadList.forEach((download) {
+          downloadsResult[download.contentIdentifier] = download;
+        });
+        if (downloadsResult['A'].state == SKDownloadState.waiting &&
+            downloadsResult['B'].state == SKDownloadState.waiting) {
+          firstCompleter.complete(downloadsResult);
+        }
+        if (downloadsResult['A'].state == SKDownloadState.active &&
+            downloadsResult['B'].state == SKDownloadState.active) {
+          activeCompleter.complete(downloadsResult);
+        }
+        if (downloadsResult['A'].state == SKDownloadState.finished &&
+            downloadsResult['B'].state == SKDownloadState.finished) {
+          finishCompleter.complete(downloadsResult);
+          subscription.cancel();
+        }
+      });
+
+      final SKDownloadWrapper downloadA = fakeIOSPlatform.createDownloadWithID(
+          id: 'A', state: SKDownloadState.waiting);
+      final SKDownloadWrapper downloadB = fakeIOSPlatform.createDownloadWithID(
+          id: 'B', state: SKDownloadState.waiting);
+
+      AppStoreConnection.instance.updateDownloads(
+          downloads: [downloadA, downloadB],
+          operation: SKDownloadOperation.start);
+
+      Map<String, SKDownloadWrapper> startResult = await firstCompleter.future;
+      expect(startResult.length, 2);
+      expect(startResult['A'].state, SKDownloadState.waiting);
+      expect(startResult['B'].state, SKDownloadState.waiting);
+
+      Map<String, SKDownloadWrapper> activeResult =
+          await activeCompleter.future;
+      expect(activeResult.length, 2);
+      expect(activeResult['A'].state, SKDownloadState.active);
+      expect(activeResult['B'].state, SKDownloadState.active);
+
+      Map<String, SKDownloadWrapper> finishResult =
+          await activeCompleter.future;
+      expect(finishResult.length, 2);
+      expect(finishResult['A'].state, SKDownloadState.finished);
+      expect(finishResult['B'].state, SKDownloadState.finished);
+    });
+
+    test('pause download', () async {
+      Map<String, SKDownloadWrapper> downloadsResult = Map();
+      Completer completer = Completer();
+      Stream<List<SKDownloadWrapper>> stream =
+          AppStoreConnection.instance.downloadStream;
+
+      StreamSubscription subscription;
+      subscription = stream.listen((downloadList) {
+        downloadList.forEach((download) {
+          downloadsResult[download.contentIdentifier] = download;
+        });
+        if (downloadsResult['A'].state == SKDownloadState.pause &&
+            downloadsResult['B'].state == SKDownloadState.pause) {
+          completer.complete(downloadsResult);
+          subscription.cancel();
+        } else {
+          throw Exception('pause download should not have other state');
+        }
+      });
+
+      final SKDownloadWrapper downloadA = fakeIOSPlatform.createDownloadWithID(
+          id: 'A', state: SKDownloadState.waiting);
+      final SKDownloadWrapper downloadB = fakeIOSPlatform.createDownloadWithID(
+          id: 'B', state: SKDownloadState.waiting);
+
+      AppStoreConnection.instance.updateDownloads(
+          downloads: [downloadA, downloadB],
+          operation: SKDownloadOperation.pause);
+
+      Map<String, SKDownloadWrapper> result = await completer.future;
+      expect(result.length, 2);
+      expect(result['A'].state, SKDownloadState.pause);
+      expect(result['B'].state, SKDownloadState.pause);
+    });
+
+    test('cancel download', () async {
+      Map<String, SKDownloadWrapper> downloadsResult = Map();
+      Completer completer = Completer();
+      Stream<List<SKDownloadWrapper>> stream =
+          AppStoreConnection.instance.downloadStream;
+
+      StreamSubscription subscription;
+      subscription = stream.listen((downloadList) {
+        downloadList.forEach((download) {
+          downloadsResult[download.contentIdentifier] = download;
+        });
+        if (downloadsResult['A'].state == SKDownloadState.cancelled &&
+            downloadsResult['B'].state == SKDownloadState.cancelled) {
+          completer.complete(downloadsResult);
+          subscription.cancel();
+        } else {
+          throw Exception('pause download should not have other state');
+        }
+      });
+
+      final SKDownloadWrapper downloadA = fakeIOSPlatform.createDownloadWithID(
+          id: 'A', state: SKDownloadState.waiting);
+      final SKDownloadWrapper downloadB = fakeIOSPlatform.createDownloadWithID(
+          id: 'B', state: SKDownloadState.waiting);
+
+      AppStoreConnection.instance.updateDownloads(
+          downloads: [downloadA, downloadB],
+          operation: SKDownloadOperation.cancel);
+
+      Map<String, SKDownloadWrapper> result = await completer.future;
+      expect(result.length, 2);
+      expect(result['A'].state, SKDownloadState.cancelled);
+      expect(result['B'].state, SKDownloadState.cancelled);
+    });
+
+    test('resume download', () async {
+      Map<String, SKDownloadWrapper> downloadsResult = Map();
+      Completer completer = Completer();
+      Stream<List<SKDownloadWrapper>> stream =
+          AppStoreConnection.instance.downloadStream;
+
+      StreamSubscription subscription;
+      subscription = stream.listen((downloadList) {
+        downloadList.forEach((download) {
+          downloadsResult[download.contentIdentifier] = download;
+        });
+        if (downloadsResult['A'].state == SKDownloadState.active &&
+            downloadsResult['B'].state == SKDownloadState.active) {
+          completer.complete(downloadsResult);
+          subscription.cancel();
+        } else {
+          throw Exception('pause download should not have other state');
+        }
+      });
+
+      final SKDownloadWrapper downloadA = fakeIOSPlatform.createDownloadWithID(
+          id: 'A', state: SKDownloadState.waiting);
+      final SKDownloadWrapper downloadB = fakeIOSPlatform.createDownloadWithID(
+          id: 'B', state: SKDownloadState.waiting);
+
+      AppStoreConnection.instance.updateDownloads(
+          downloads: [downloadA, downloadB],
+          operation: SKDownloadOperation.resume);
+
+      Map<String, SKDownloadWrapper> result = await completer.future;
+      expect(result.length, 2);
+      expect(result['A'].state, SKDownloadState.active);
+      expect(result['B'].state, SKDownloadState.active);
+    });
+  });
 }
 
-class FakeIOSPlatform {
-  FakeIOSPlatform() {
+class _FakeIOSPlatform {
+  _FakeIOSPlatform() {
     channel.setMockMethodCallHandler(onMethodCall);
   }
 
@@ -269,6 +432,7 @@ class FakeIOSPlatform {
   bool testRestoredTransactionsNull;
   bool testTransactionFail;
   SKError testRestoredError;
+  Map<String, SKDownloadWrapper> currentDownloads;
 
   void reset() {
     transactions = [];
@@ -305,9 +469,12 @@ class FakeIOSPlatform {
     testRestoredTransactionsNull = false;
     testTransactionFail = false;
     testRestoredError = null;
+
+    currentDownloads = Map();
   }
 
-  SKPaymentTransactionWrapper createPendingTransactionWithProductID(String id) {
+  SKPaymentTransactionWrapper _createPendingTransactionWithProductID(
+      String id) {
     return SKPaymentTransactionWrapper(
         payment: SKPaymentWrapper(productIdentifier: id),
         transactionState: SKPaymentTransactionStateWrapper.purchasing,
@@ -318,7 +485,7 @@ class FakeIOSPlatform {
         originalTransaction: null);
   }
 
-  SKPaymentTransactionWrapper createPurchasedTransactionWithProductID(
+  SKPaymentTransactionWrapper _createPurchasedTransactionWithProductID(
       String id) {
     return SKPaymentTransactionWrapper(
         payment: SKPaymentWrapper(productIdentifier: id),
@@ -330,7 +497,7 @@ class FakeIOSPlatform {
         originalTransaction: null);
   }
 
-  SKPaymentTransactionWrapper createFailedTransactionWithProductID(String id) {
+  SKPaymentTransactionWrapper _createFailedTransactionWithProductID(String id) {
     return SKPaymentTransactionWrapper(
         payment: SKPaymentWrapper(productIdentifier: id),
         transactionState: SKPaymentTransactionStateWrapper.failed,
@@ -342,6 +509,21 @@ class FakeIOSPlatform {
             userInfo: {'message': 'an error message'}),
         downloads: null,
         originalTransaction: null);
+  }
+
+  SKDownloadWrapper createDownloadWithID({String id, SKDownloadState state}) {
+    return SKDownloadWrapper(
+      contentIdentifier: id,
+      state: state,
+      contentLength: 32,
+      contentURL: 'https://download.com',
+      contentVersion: '0.0.1',
+      transactionID: 'tranID',
+      progress: 0.6,
+      timeRemaining: 1231231,
+      downloadTimeUnknown: false,
+      error: dummyError,
+    );
   }
 
   Future<dynamic> onMethodCall(MethodCall call) {
@@ -391,25 +573,104 @@ class FakeIOSPlatform {
       case '-[InAppPurchasePlugin addPayment:result:]':
         String id = call.arguments['productIdentifier'];
         SKPaymentTransactionWrapper transaction =
-            createPendingTransactionWithProductID(id);
+            _createPendingTransactionWithProductID(id);
         AppStoreConnection.observer
             .updatedTransactions(transactions: [transaction]);
         sleep(const Duration(milliseconds: 30));
         if (testTransactionFail) {
           SKPaymentTransactionWrapper transaction_failed =
-              createFailedTransactionWithProductID(id);
+              _createFailedTransactionWithProductID(id);
           AppStoreConnection.observer
               .updatedTransactions(transactions: [transaction_failed]);
         } else {
           SKPaymentTransactionWrapper transaction_finished =
-              createPurchasedTransactionWithProductID(id);
+              _createPurchasedTransactionWithProductID(id);
           AppStoreConnection.observer
               .updatedTransactions(transactions: [transaction_finished]);
         }
         break;
       case '-[InAppPurchasePlugin finishTransaction:result:]':
         finishedTransactions
-            .add(createPurchasedTransactionWithProductID(call.arguments));
+            .add(_createPurchasedTransactionWithProductID(call.arguments));
+        break;
+      case '-[InAppPurchasePlugin updateDownloads:result:]':
+        List<String> downloadIDs =
+            List.castFrom<dynamic, String>(call.arguments['downloads']);
+        SKDownloadOperation operation = SKDownloadOperation.values
+            .firstWhere((e) => e.toString() == call.arguments['operation']);
+
+        switch (operation) {
+          case SKDownloadOperation.start:
+            List<SKDownloadWrapper> downloads = List();
+            for (String id in downloadIDs) {
+              assert(currentDownloads[id] == null);
+              SKDownloadWrapper download =
+                  createDownloadWithID(id: id, state: SKDownloadState.waiting);
+              currentDownloads[id] = download;
+              downloads.add(download);
+            }
+            AppStoreConnection.observer.updatedDownloads(downloads: downloads);
+
+            sleep(const Duration(milliseconds: 30));
+            downloads = downloadIDs.map((String downloadID) {
+              return currentDownloads[downloadID];
+            }).map((SKDownloadWrapper download) {
+              currentDownloads[download.contentIdentifier] =
+                  createDownloadWithID(
+                      id: download.contentIdentifier,
+                      state: SKDownloadState.active);
+              return currentDownloads[download.contentIdentifier];
+            }).toList();
+            AppStoreConnection.observer.updatedDownloads(downloads: downloads);
+
+            sleep(const Duration(milliseconds: 30));
+            downloads = downloadIDs.map((String downloadID) {
+              return currentDownloads[downloadID];
+            }).map((SKDownloadWrapper download) {
+              currentDownloads[download.contentIdentifier] =
+                  createDownloadWithID(
+                      id: download.contentIdentifier,
+                      state: SKDownloadState.finished);
+              return currentDownloads[download.contentIdentifier];
+            }).toList();
+            AppStoreConnection.observer.updatedDownloads(downloads: downloads);
+            break;
+          case SKDownloadOperation.pause:
+            List<SKDownloadWrapper> downloads = List();
+            for (String id in downloadIDs) {
+              assert(currentDownloads[id] == null);
+              SKDownloadWrapper download =
+                  createDownloadWithID(id: id, state: SKDownloadState.pause);
+              currentDownloads[id] = download;
+              downloads.add(download);
+            }
+            AppStoreConnection.observer.updatedDownloads(downloads: downloads);
+            break;
+          case SKDownloadOperation.cancel:
+            List<SKDownloadWrapper> downloads = List();
+            for (String id in downloadIDs) {
+              assert(currentDownloads[id] == null);
+              SKDownloadWrapper download = createDownloadWithID(
+                  id: id, state: SKDownloadState.cancelled);
+              currentDownloads[id] = download;
+              downloads.add(download);
+            }
+            AppStoreConnection.observer.updatedDownloads(downloads: downloads);
+            break;
+          case SKDownloadOperation.resume:
+            List<SKDownloadWrapper> downloads = List();
+            for (String id in downloadIDs) {
+              assert(currentDownloads[id] == null);
+              SKDownloadWrapper download =
+                  createDownloadWithID(id: id, state: SKDownloadState.active);
+              currentDownloads[id] = download;
+              downloads.add(download);
+            }
+            AppStoreConnection.observer.updatedDownloads(downloads: downloads);
+            break;
+            break;
+          default:
+        }
         break;
     }
     return Future<void>.sync(() {});
