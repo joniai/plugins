@@ -4,7 +4,6 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/src/in_app_purchase_connection/purchase_details.dart';
