@@ -21,4 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messenger;
 @end
 
+@interface MyWebview: WKWebView
+
+@end
+
 NS_ASSUME_NONNULL_END

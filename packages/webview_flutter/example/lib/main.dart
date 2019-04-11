@@ -42,8 +42,8 @@ class WebViewExample extends StatelessWidget {
       // We're using a Builder here so we have a context that is below the Scaffold
       // to allow calling Scaffold.of(context) so we can show a snackbar.
       body: Builder(builder: (BuildContext context) {
-        return WebView(
-          initialUrl: 'https://flutter.dev',
+        return ClipRect(child: WebView(
+          initialUrl: 'https://google.com',
           javascriptMode: JavascriptMode.unrestricted,
           onWebViewCreated: (WebViewController webViewController) {
             _controller.complete(webViewController);
@@ -64,7 +64,7 @@ class WebViewExample extends StatelessWidget {
           onPageFinished: (String url) {
             print('Page finished loading: $url');
           },
-        );
+        ), clipper: CustomRect(),);
       }),
       floatingActionButton: favoriteButton(),
     );
@@ -323,5 +323,18 @@ class NavigationControls extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+
+class CustomRect extends CustomClipper<Rect>{
+  @override
+  Rect getClip(Size size) {
+    final Rect rect = Rect.fromLTRB(0.0, 0.0, size.width/2, size.height/2);
+    return rect;
+  }
+  @override
+  bool shouldReclip(CustomRect oldClipper) {
+    return true;
   }
 }

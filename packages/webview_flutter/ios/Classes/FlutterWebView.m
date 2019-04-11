@@ -35,7 +35,7 @@
 @end
 
 @implementation FLTWebViewController {
-  WKWebView* _webView;
+  MyWebview* _webView;
   int64_t _viewId;
   FlutterMethodChannel* _channel;
   NSString* _currentUrl;
@@ -65,7 +65,8 @@
     WKWebViewConfiguration* configuration = [[WKWebViewConfiguration alloc] init];
     configuration.userContentController = userContentController;
 
-    _webView = [[WKWebView alloc] initWithFrame:frame configuration:configuration];
+    _webView = [[MyWebview alloc] initWithFrame:frame configuration:configuration];
+    NSLog(@"webview a11y elements %@", _webView.accessibilityElements);
     _navigationDelegate = [[FLTWKNavigationDelegate alloc] initWithChannel:_channel];
     _webView.navigationDelegate = _navigationDelegate;
     __weak __typeof__(self) weakSelf = self;
@@ -281,6 +282,14 @@
                             forMainFrameOnly:NO];
     [userContentController addUserScript:wrapperScript];
   }
+}
+
+@end
+
+@implementation MyWebview
+
+- (void)accessibilityElementDidBecomeFocused {
+  NSLog(@"webview focused");
 }
 
 @end
