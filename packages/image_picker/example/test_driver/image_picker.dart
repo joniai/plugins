@@ -9,9 +9,27 @@ void main() {
   enableFlutterDriverExtension(handler: (_) => completer.future);
   tearDownAll(() => completer.complete(null));
 
-  group('image_picker test driver', () {
-    test('test image_picker', () async {
+  group('pickImage', () {
+    test('test pick image with camera source', () async {
+      expect(await ImagePicker.pickImage(source: ImageSource.camera), completes);
+      expect(await ImagePicker.pickImage(source: ImageSource.camera, maxWidth: 100, maxHeight: 100), completes);
+    });
 
+    test('test pick image with gallery source', () async {
+      expect(await ImagePicker.pickImage(source: ImageSource.gallery), completes);
+      expect(await ImagePicker.pickImage(source: ImageSource.gallery, maxWidth: 100, maxHeight: 100), completes);
+      expect(await ImagePicker.pickImage(source: ImageSource.gallery, maxWidth: -1, maxHeight: 100), throwsAssertionError);
+      expect(await ImagePicker.pickImage(source: ImageSource.gallery, maxWidth: 100, maxHeight: -1), throwsAssertionError);
+    });
+  });
+
+  group('pickVideo', () {
+    test('test pick video with camera source', () async {
+      expect(await ImagePicker.pickVideo(source: ImageSource.camera), completes);
+    });
+
+    test('test pick video with gallery source', () async {
+      expect(await ImagePicker.pickVideo(source: ImageSource.gallery), completes);
     });
   });
 }
