@@ -54,6 +54,7 @@ static double ToDouble(NSNumber* data) { return [FLTGoogleMapJsonConversions toD
   // https://github.com/flutter/flutter/issues/27550
   BOOL _cameraDidInitialSetup;
   FLTMarkersController* _markersController;
+  FLTPolylinesController* _polylinesController;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -84,9 +85,16 @@ static double ToDouble(NSNumber* data) { return [FLTGoogleMapJsonConversions toD
     _markersController = [[FLTMarkersController alloc] init:_channel
                                                     mapView:_mapView
                                                   registrar:registrar];
+    _polylinesController = [[FLTPolylinesController alloc] init:_channel
+                                                        mapView:_mapView
+                                                      registrar:registrar];
     id markersToAdd = args[@"markersToAdd"];
     if ([markersToAdd isKindOfClass:[NSArray class]]) {
       [_markersController addMarkers:markersToAdd];
+    }
+    id polylinesToAdd = args[@"polylinesToAdd"];
+    if ([polylinesToAdd isKindOfClass:[NSArray class]]) {
+      [_polylinesController addPolylines:polylinesToAdd];
     }
   }
   return self;
@@ -139,6 +147,20 @@ static double ToDouble(NSNumber* data) { return [FLTGoogleMapJsonConversions toD
       [_markersController removeMarkerIds:markerIdsToRemove];
     }
     result(nil);
+  } else if ([call.method isEqualToString:@"polylines#update"]) {
+    id polylinesToAdd = call.arguments[@"polylinesToAdd"];
+    if ([polylinesToAdd isKindOfClass:[NSArray class]]) {
+      [_polylinesController addPolylines:polylinesToAdd];
+    }
+    id polylinesToChange = call.arguments[@"polylinesToChange"];
+    if ([polylinesToChange isKindOfClass:[NSArray class]]) {
+      [_polylinesController changePolylines:polylinesToChange];
+    }
+    id polylineIdsToRemove = call.arguments[@"polylineIdsToRemove"];
+    if ([polylineIdsToRemove isKindOfClass:[NSArray class]]) {
+      [_polylinesController removePolylineIds:polylineIdsToRemove];
+    }
+    result(nil);
   } else if ([call.method isEqualToString:@"map#isCompassEnabled"]) {
     NSNumber* isCompassEnabled = @(_mapView.settings.compassButton);
     result(isCompassEnabled);
@@ -157,6 +179,9 @@ static double ToDouble(NSNumber* data) { return [FLTGoogleMapJsonConversions toD
   } else if ([call.method isEqualToString:@"map#isScrollGesturesEnabled"]) {
     NSNumber* isScrollGesturesEnabled = @(_mapView.settings.scrollGestures);
     result(isScrollGesturesEnabled);
+  } else if ([call.method isEqualToString:@"map#isMyLocationButtonEnabled"]) {
+    NSNumber* isMyLocationButtonEnabled = @(_mapView.settings.myLocationButton);
+    result(isMyLocationButtonEnabled);
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -235,6 +260,10 @@ static double ToDouble(NSNumber* data) { return [FLTGoogleMapJsonConversions toD
   _mapView.settings.myLocationButton = enabled;
 }
 
+- (void)setMyLocationButtonEnabled:(BOOL)enabled {
+  _mapView.settings.myLocationButton = enabled;
+}
+
 #pragma mark - GMSMapViewDelegate methods
 
 - (void)mapView:(GMSMapView*)mapView willMove:(BOOL)gesture {
@@ -269,6 +298,10 @@ static double ToDouble(NSNumber* data) { return [FLTGoogleMapJsonConversions toD
 - (void)mapView:(GMSMapView*)mapView didTapInfoWindowOfMarker:(GMSMarker*)marker {
   NSString* markerId = marker.userData[0];
   [_markersController onInfoWindowTap:markerId];
+}
+- (void)mapView:(GMSMapView*)mapView didTapOverlay:(GMSOverlay*)overlay {
+  NSString* polylineId = overlay.userData[0];
+  [_polylinesController onPolylineTap:polylineId];
 }
 
 - (void)mapView:(GMSMapView*)mapView didTapAtCoordinate:(CLLocationCoordinate2D)coordinate {
@@ -412,5 +445,9 @@ static void InterpretMapOptions(NSDictionary* data, id<FLTGoogleMapOptionsSink> 
   NSNumber* myLocationEnabled = data[@"myLocationEnabled"];
   if (myLocationEnabled) {
     [sink setMyLocationEnabled:ToBool(myLocationEnabled)];
+  }
+  NSNumber* myLocationButtonEnabled = data[@"myLocationButtonEnabled"];
+  if (myLocationButtonEnabled) {
+    [sink setMyLocationButtonEnabled:ToBool(myLocationButtonEnabled)];
   }
 }

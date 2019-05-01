@@ -1,3 +1,11 @@
+## 4.0.0+4
+
+* Remove obsolete `use_frameworks!` instruction.
+
+## 4.0.0+3
+
+* Update iOS configuration documentation.
+
 ## 4.0.0+2
 
 * Fix example app's floating action button that stopped working due to a breaking change.

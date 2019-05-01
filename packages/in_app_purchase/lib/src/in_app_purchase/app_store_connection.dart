@@ -5,7 +5,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:in_app_purchase/src/in_app_purchase_connection/purchase_details.dart';
+import 'package:in_app_purchase/src/in_app_purchase/purchase_details.dart';
 
 import 'in_app_purchase_connection.dart';
 import 'product_details.dart';
@@ -234,10 +234,13 @@ class _TransactionObserver implements SKTransactionObserverWrapper {
     _restoreCompleter.complete(_restoredTransactions ?? []);
   }
 
+<<<<<<< HEAD:packages/in_app_purchase/lib/src/in_app_purchase_connection/app_store_connection.dart
   void updatedDownloads({List<SKDownloadWrapper> downloads}) {
     downloadStreamController.add(downloads);
   }
 
+=======
+>>>>>>> master:packages/in_app_purchase/lib/src/in_app_purchase/app_store_connection.dart
   bool shouldAddStorePayment(
       {SKPaymentWrapper payment, SKProductWrapper product}) {
     // In this unified API, we always return true to keep it consistent with the behavior on Google Play.
