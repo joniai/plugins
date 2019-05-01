@@ -334,11 +334,7 @@ const NSString *DOWNLOAD_OPERATION_START = @"SKDownloadOperation.start";
 }
 
 - (void)updatedDownloads:(NSArray<SKDownload *> *)downloads {
-  NSMutableArray *maps = [NSMutableArray new];
-  for (SKDownload *download in downloads) {
-    [maps addObject:[FIAObjectTranslator getMapFromSKDownload:download]];
-  }
-  [self.callbackChannel invokeMethod:@"updatedDownloads" arguments:maps];
+  NSLog(@"Received an updatedDownloads callback, but downloads are not supported.");
 }
 
 - (BOOL)shouldAddStorePayment:(SKPayment *)payment product:(SKProduct *)product {
