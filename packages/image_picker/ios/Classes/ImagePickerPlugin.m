@@ -11,6 +11,9 @@
 
 #import "FLTImagePickerMetaDataUtil.h"
 #import "FLTImagePickerPhotoAssetUtil.h"
+#import "FLTImagePickerResultUntil.h"
+
+NSString *const kFLTImagePickerSaveToAlbumParamKey = @"saveToAlbum";
 
 @interface FLTImagePickerPlugin () <UINavigationControllerDelegate, UIImagePickerControllerDelegate>
 
@@ -236,36 +239,27 @@ static const int SOURCE_GALLERY = 1;
   if (!self.result) {
     return;
   }
+  BOOL shouldSaveToAlbum = [_arguments[kFLTImagePickerSaveToAlbumParamKey] boolValue] && picker.sourceType == UIImagePickerControllerSourceTypeCamera;
   if (videoURL != nil) {
-    self.result(videoURL.path);
-    self.result = nil;
+    if (shouldSaveToAlbum && UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(videoURL.path)) {
+      // If saving to album, the completion handling of this funciton will handle the `result` callback.
+      UISaveVideoAtPathToSavedPhotosAlbum(videoURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
+    } else {
+      self.result(videoURL.path);
+      self.result = nil;
+    }
   } else {
     UIImage *image = [info objectForKey:UIImagePickerControllerEditedImage];
     if (image == nil) {
       image = [info objectForKey:UIImagePickerControllerOriginalImage];
     }
-
-    NSNumber *maxWidth = [_arguments objectForKey:@"maxWidth"];
-    NSNumber *maxHeight = [_arguments objectForKey:@"maxHeight"];
-
-    if (maxWidth != (id)[NSNull null] || maxHeight != (id)[NSNull null]) {
-      image = [self scaledImage:image maxWidth:maxWidth maxHeight:maxHeight];
-    }
-
-    PHAsset *originalAsset = [FLTImagePickerPhotoAssetUtil getAssetFromImagePickerInfo:info];
-    if (!originalAsset) {
-      // Image picked without an original asset (e.g. User took a photo directly)
-      [self saveImageWithPickerInfo:info image:image];
+    if (shouldSaveToAlbum) {
+      // If saving to album, the completion handling of this funciton will handle the `result` callback.
+      UIImageWriteToSavedPhotosAlbum(image, self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
     } else {
-      __weak typeof(self) weakSelf = self;
-      [[PHImageManager defaultManager]
-          requestImageDataForAsset:originalAsset
-                           options:nil
-                     resultHandler:^(NSData *_Nullable imageData, NSString *_Nullable dataUTI,
-                                     UIImageOrientation orientation, NSDictionary *_Nullable info) {
-                       [weakSelf saveImageWithOriginalImageData:imageData image:image];
-                     }];
+      [self processPickedImage:image info:info];
     }
+
   }
   _arguments = nil;
 }
@@ -276,6 +270,34 @@ static const int SOURCE_GALLERY = 1;
 
   self.result = nil;
   _arguments = nil;
+}
+
+#pragma mark - Picked image processing
+
+- (void)processPickedImage:(UIImage *)imagePicked info:(NSDictionary<NSString *,id> * _Nonnull)info {
+  NSNumber *maxWidth = [_arguments objectForKey:@"maxWidth"];
+  NSNumber *maxHeight = [_arguments objectForKey:@"maxHeight"];
+  UIImage *imageToSave;
+  if (maxWidth != (id)[NSNull null] || maxHeight != (id)[NSNull null]) {
+    imageToSave = [self scaledImage:imagePicked maxWidth:maxWidth maxHeight:maxHeight];
+  } else {
+    imageToSave = imagePicked;
+  }
+  
+  PHAsset *originalAsset = [FLTImagePickerPhotoAssetUtil getAssetFromImagePickerInfo:info];
+  if (!originalAsset) {
+    // Image picked without an original asset (e.g. User took a photo directly)
+    [self saveImageWithPickerInfo:info image:imageToSave];
+  } else {
+    __weak typeof(self) weakSelf = self;
+    [[PHImageManager defaultManager]
+     requestImageDataForAsset:originalAsset
+     options:nil
+     resultHandler:^(NSData *_Nullable imageData, NSString *_Nullable dataUTI,
+                     UIImageOrientation orientation, NSDictionary *_Nullable info) {
+       [weakSelf saveImageWithOriginalImageData:imageData image:imageToSave];
+     }];
+  }
 }
 
 - (UIImage *)scaledImage:(UIImage *)image
@@ -348,6 +370,28 @@ static const int SOURCE_GALLERY = 1;
                                     details:nil]);
   }
   self.result = nil;
+}
+
+#pragma mark - result handling
+
+- (void)handleResultWithPath:(NSString *)path error:(NSError *)error {
+  self.result([FLTImagePickerResultUntil resultWithPath:path error:error]);
+  self.result = nil;
+}
+
+#pragma mark - Handle save image/videos to album
+
+// Handling completion of saving video, the signature should not be changed.
+- (void)video:(NSString *) videoPath
+    didFinishSavingWithError:(NSError *) error
+  contextInfo:(void *) contextInfo {
+  [self handleResultWithPath:videoPath error:error];
+}
+
+- (void)image:(UIImage *)image
+didFinishSavingWithError:(NSError *)error
+  contextInfo:(void *)contextInfo {
+  
 }
 
 @end

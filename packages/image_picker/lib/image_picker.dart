@@ -33,12 +33,16 @@ class ImagePicker {
   /// [maxHeight] tall. Otherwise the image will be returned at it's
   /// original width and height.
   ///
+  /// If set `saveToAlbum` to true, when the `source` is `ImageSource.camera`, the picked image will be saved into album.
+  /// If scaling happened, the original image (before scaling) will be saved.
+  ///
   /// In Android, the MainActivity can be destroyed for various reasons. If that happens, the result will be lost
   /// in this call. You can then call [retrieveLostData] when your app relaunches to retrieve the lost data.
   static Future<File> pickImage({
     @required ImageSource source,
     double maxWidth,
     double maxHeight,
+    bool saveToAlbum = true
   }) async {
     assert(source != null);
 
@@ -59,6 +63,7 @@ class ImagePicker {
         'source': source.index,
         'maxWidth': maxWidth,
         'maxHeight': maxHeight,
+        'saveToAlbum': saveToAlbum,
       },
     );
 
@@ -74,6 +79,7 @@ class ImagePicker {
   /// in this call. You can then call [retrieveLostData] when your app relaunches to retrieve the lost data.
   static Future<File> pickVideo({
     @required ImageSource source,
+    bool saveToAlbum = true
   }) async {
     assert(source != null);
 
@@ -84,6 +90,7 @@ class ImagePicker {
       'pickVideo',
       <String, dynamic>{
         'source': source.index,
+        'saveToAlbum' : saveToAlbum,
       },
     );
     return path == null ? null : File(path);
