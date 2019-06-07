@@ -42,7 +42,7 @@ class ImagePicker {
     @required ImageSource source,
     double maxWidth,
     double maxHeight,
-    bool saveToAlbum = true
+    bool saveToAlbum = false
   }) async {
     assert(source != null);
 

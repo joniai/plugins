@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _controller.removeListener(_onVideoControllerUpdate);
     }
     if (isVideo) {
-      ImagePicker.pickVideo(source: source).then((File file) {
+      ImagePicker.pickVideo(source: source, saveToAlbum: true).then((File file) {
         if (file != null && mounted) {
           setState(() {
             _controller = VideoPlayerController.file(file)
@@ -59,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     } else {
       try {
-        _imageFile = await ImagePicker.pickImage(source: source);
+        _imageFile = await ImagePicker.pickImage(source: source, saveToAlbum: true);
       } catch (e) {
         _pickImageError = e;
       }

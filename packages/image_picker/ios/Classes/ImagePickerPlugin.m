@@ -11,7 +11,6 @@
 
 #import "FLTImagePickerMetaDataUtil.h"
 #import "FLTImagePickerPhotoAssetUtil.h"
-#import "FLTImagePickerResultUntil.h"
 
 NSString *const kFLTImagePickerSaveToAlbumParamKey = @"saveToAlbum";
 
@@ -241,25 +240,22 @@ static const int SOURCE_GALLERY = 1;
   }
   BOOL shouldSaveToAlbum = [_arguments[kFLTImagePickerSaveToAlbumParamKey] boolValue] && picker.sourceType == UIImagePickerControllerSourceTypeCamera;
   if (videoURL != nil) {
+    self.result(videoURL.path);
+    self.result = nil;
     if (shouldSaveToAlbum && UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(videoURL.path)) {
       // If saving to album, the completion handling of this funciton will handle the `result` callback.
       UISaveVideoAtPathToSavedPhotosAlbum(videoURL.path, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
-    } else {
-      self.result(videoURL.path);
-      self.result = nil;
     }
   } else {
     UIImage *image = [info objectForKey:UIImagePickerControllerEditedImage];
     if (image == nil) {
       image = [info objectForKey:UIImagePickerControllerOriginalImage];
     }
+    [self processPickedImage:image info:info];
     if (shouldSaveToAlbum) {
       // If saving to album, the completion handling of this funciton will handle the `result` callback.
       UIImageWriteToSavedPhotosAlbum(image, self, @selector(image:didFinishSavingWithError:contextInfo:), nil);
-    } else {
-      [self processPickedImage:image info:info];
     }
-
   }
   _arguments = nil;
 }
@@ -372,26 +368,27 @@ static const int SOURCE_GALLERY = 1;
   self.result = nil;
 }
 
-#pragma mark - result handling
-
-- (void)handleResultWithPath:(NSString *)path error:(NSError *)error {
-  self.result([FLTImagePickerResultUntil resultWithPath:path error:error]);
-  self.result = nil;
-}
-
 #pragma mark - Handle save image/videos to album
 
 // Handling completion of saving video, the signature should not be changed.
 - (void)video:(NSString *) videoPath
     didFinishSavingWithError:(NSError *) error
   contextInfo:(void *) contextInfo {
-  [self handleResultWithPath:videoPath error:error];
+  if (error) {
+    // TODO(canglaz): We might want to expose this error to dart.
+    // To expose error to dart will be a breaking change.
+    NSLog(@"Saving video to album error: %@", error);
+  }
 }
 
 - (void)image:(UIImage *)image
 didFinishSavingWithError:(NSError *)error
   contextInfo:(void *)contextInfo {
-  
+  if (error) {
+    // TODO(canglaz): We might want to expose this error to dart.
+    // To expose error to dart will be a breaking change.
+    NSLog(@"Saving image to album error: %@", error);
+  }
 }
 
 @end

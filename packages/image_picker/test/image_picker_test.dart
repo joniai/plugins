@@ -34,11 +34,13 @@ void main() {
               'source': 0,
               'maxWidth': null,
               'maxHeight': null,
+              'saveToAlbum': false,
             }),
             isMethodCall('pickImage', arguments: <String, dynamic>{
               'source': 1,
               'maxWidth': null,
               'maxHeight': null,
+              'saveToAlbum': false,
             }),
           ],
         );
@@ -67,21 +69,25 @@ void main() {
               'source': 0,
               'maxWidth': null,
               'maxHeight': null,
+              'saveToAlbum': false,
             }),
             isMethodCall('pickImage', arguments: <String, dynamic>{
               'source': 0,
               'maxWidth': 10.0,
               'maxHeight': null,
+              'saveToAlbum': false,
             }),
             isMethodCall('pickImage', arguments: <String, dynamic>{
               'source': 0,
               'maxWidth': null,
               'maxHeight': 10.0,
+              'saveToAlbum': false,
             }),
             isMethodCall('pickImage', arguments: <String, dynamic>{
               'source': 0,
               'maxWidth': 10.0,
               'maxHeight': 20.0,
+              'saveToAlbum': false,
             }),
           ],
         );
@@ -96,6 +102,30 @@ void main() {
         expect(
           ImagePicker.pickImage(source: ImageSource.camera, maxHeight: -1.0),
           throwsArgumentError,
+        );
+      });
+
+
+      test('passes the saveToAlbum argument correct', () async {
+        await ImagePicker.pickImage(source: ImageSource.camera, saveToAlbum: true);
+        await ImagePicker.pickImage(source: ImageSource.camera, saveToAlbum: false);
+
+        expect(
+          log,
+          <Matcher>[
+            isMethodCall('pickImage', arguments: <String, dynamic>{
+              'source': 0,
+              'maxWidth': null,
+              'maxHeight': null,
+              'saveToAlbum': true,
+            }),
+            isMethodCall('pickImage', arguments: <String, dynamic>{
+              'source': 0,
+              'maxWidth': null,
+              'maxHeight': null,
+              'saveToAlbum': false,
+            }),
+          ],
         );
       });
 
