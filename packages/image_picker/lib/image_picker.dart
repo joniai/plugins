@@ -54,10 +54,7 @@ class ImagePicker {
       throw ArgumentError.value(maxHeight, 'maxHeight cannot be negative');
     }
 
-    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
-    // https://github.com/flutter/flutter/issues/26431
-    // ignore: strong_mode_implicit_dynamic_method
-    final String path = await _channel.invokeMethod(
+    final String path = await _channel.invokeMethod<String>(
       'pickImage',
       <String, dynamic>{
         'source': source.index,
@@ -82,11 +79,7 @@ class ImagePicker {
     bool saveToAlbum = true
   }) async {
     assert(source != null);
-
-    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
-    // https://github.com/flutter/flutter/issues/26431
-    // ignore: strong_mode_implicit_dynamic_method
-    final String path = await _channel.invokeMethod(
+    final String path = await _channel.invokeMethod<String>(
       'pickVideo',
       <String, dynamic>{
         'source': source.index,
@@ -110,11 +103,8 @@ class ImagePicker {
   /// * [LostDataResponse], for what's included in the response.
   /// * [Android Activity Lifecycle](https://developer.android.com/reference/android/app/Activity.html), for more information on MainActivity destruction.
   static Future<LostDataResponse> retrieveLostData() async {
-    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
-    // https://github.com/flutter/flutter/issues/26431
-    // ignore: strong_mode_implicit_dynamic_method
-    final Map<dynamic, dynamic> result =
-        await _channel.invokeMethod('retrieve');
+    final Map<String, dynamic> result =
+        await _channel.invokeMapMethod<String, dynamic>('retrieve');
     if (result == null) {
       return LostDataResponse.empty();
     }

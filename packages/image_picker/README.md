@@ -18,6 +18,7 @@ Add the following keys to your _Info.plist_ file, located in `<project root>/ios
 * `NSPhotoLibraryUsageDescription` - describe why your app needs permission for the photo library. This is called _Privacy - Photo Library Usage Description_ in the visual editor.
 * `NSCameraUsageDescription` - describe why your app needs access to the camera. This is called _Privacy - Camera Usage Description_ in the visual editor.
 * `NSMicrophoneUsageDescription` - describe why your app needs access to the microphone, if you intend to record videos. This is called _Privacy - Microphone Usage Description_ in the visual editor.
+* `NSPhotoLibraryAddUsageDescription` - describe why your app needs to request white access to the user's photo library.
 
 ### Android
 
@@ -71,7 +72,7 @@ Android system -- although very rarely -- sometimes kills the MainActivity after
 
 ```dart
 Future<void> retrieveLostData() async {
-  final RetrieveLostDataResponse response =
+  final LostDataResponse response =
       await ImagePicker.retrieveLostData();
   if (response == null) {
     return;
