@@ -392,7 +392,7 @@ void main() {
                     Container(
                       padding: const EdgeInsets.all(20),
                       child: NetworkPlayerLifeCycle(
-                        'http://184.72.239.149/vod/smil:BigBuckBunny.smil/playlist.m3u8',
+                        'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
                         (BuildContext context,
                                 VideoPlayerController controller) =>
                             AspectRatioVideo(controller),
