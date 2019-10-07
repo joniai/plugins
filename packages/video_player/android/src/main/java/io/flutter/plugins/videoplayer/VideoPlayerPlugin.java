@@ -50,7 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class VideoPlayerPlugin implements MethodCallHandler {
+public class VideoPlayerPlugin{
 
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel =
