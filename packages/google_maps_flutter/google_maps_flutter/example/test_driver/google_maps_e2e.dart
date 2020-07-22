@@ -426,6 +426,7 @@ void main() {
   testWidgets('testInitialCenterLocationAtCenter', (WidgetTester tester) async {
     final Completer<GoogleMapController> mapControllerCompleter =
         Completer<GoogleMapController>();
+    final Completer<void> onCameraIdleCompleter = Completer<void>();
     final Key key = GlobalKey();
     await tester.pumpWidget(
       Directionality(
@@ -436,6 +437,9 @@ void main() {
           onMapCreated: (GoogleMapController controller) {
             mapControllerCompleter.complete(controller);
           },
+          onCameraIdle: () {
+            onCameraIdleCompleter.complete();
+          },
         ),
       ),
     );
@@ -443,11 +447,11 @@ void main() {
         await mapControllerCompleter.future;
 
     await tester.pumpAndSettle();
+    await onCameraIdleCompleter.future;
 
     ScreenCoordinate coordinate =
         await mapController.getScreenCoordinate(_kInitialCameraPosition.target);
     Rect rect = tester.getRect(find.byKey(key));
-    print(coordinate);
     if (Platform.isIOS) {
       // On iOS, the coordinate value from the GoogleMapSdk doesn't include the devicePixelRatio`.
       // So we don't need to do the conversion like we did below for other platforms.
@@ -465,7 +469,7 @@ void main() {
                   tester.binding.window.devicePixelRatio)
               .round());
     }
-  }, skip: true); // https://github.com/flutter/flutter/issues/54758
+  });
 
   testWidgets('testGetVisibleRegion', (WidgetTester tester) async {
     final Key key = GlobalKey();
@@ -772,6 +776,7 @@ void main() {
     final Key key = GlobalKey();
     final Completer<GoogleMapController> controllerCompleter =
         Completer<GoogleMapController>();
+    final Completer<void> onCameraIdleCompleter = Completer<void>();
 
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -781,16 +786,17 @@ void main() {
         onMapCreated: (GoogleMapController controller) {
           controllerCompleter.complete(controller);
         },
+        onCameraIdle: () {
+          onCameraIdleCompleter.complete();
+        },
       ),
     ));
 
     final GoogleMapController controller = await controllerCompleter.future;
 
     await tester.pumpAndSettle();
-    // TODO(cyanglaz): Remove this after we added `mapRendered` callback, and `mapControllerCompleter.complete(controller)` above should happen
-    // in `mapRendered`.
-    // https://github.com/flutter/flutter/issues/54758
-    await Future.delayed(Duration(seconds: 1));
+
+    await onCameraIdleCompleter.future;
 
     final LatLngBounds visibleRegion = await controller.getVisibleRegion();
     final LatLng topLeft =
@@ -807,6 +813,7 @@ void main() {
     final Key key = GlobalKey();
     final Completer<GoogleMapController> controllerCompleter =
         Completer<GoogleMapController>();
+    Completer<void> onCameraIdleCompleter = Completer<void>();
 
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -816,22 +823,24 @@ void main() {
         onMapCreated: (GoogleMapController controller) {
           controllerCompleter.complete(controller);
         },
+        onCameraIdle: () {
+          onCameraIdleCompleter.complete();
+        },
       ),
     ));
 
     final GoogleMapController controller = await controllerCompleter.future;
 
     await tester.pumpAndSettle();
-    // TODO(cyanglaz): Remove this after we added `mapRendered` callback, and `mapControllerCompleter.complete(controller)` above should happen
-    // in `mapRendered`.
-    // https://github.com/flutter/flutter/issues/54758
-    await Future.delayed(Duration(seconds: 1));
+    await onCameraIdleCompleter.future;
+    onCameraIdleCompleter = Completer<void>();
 
     double zoom = await controller.getZoomLevel();
     expect(zoom, _kInitialZoomLevel);
 
     await controller.moveCamera(CameraUpdate.zoomTo(7));
     await tester.pumpAndSettle();
+    await onCameraIdleCompleter.future;
     zoom = await controller.getZoomLevel();
     expect(zoom, equals(7));
   });
@@ -840,6 +849,7 @@ void main() {
     final Key key = GlobalKey();
     final Completer<GoogleMapController> controllerCompleter =
         Completer<GoogleMapController>();
+    final Completer<void> onCameraIdleCompleter = Completer<void>();
 
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -849,15 +859,15 @@ void main() {
         onMapCreated: (GoogleMapController controller) {
           controllerCompleter.complete(controller);
         },
+        onCameraIdle: () {
+          onCameraIdleCompleter.complete();
+        },
       ),
     ));
     final GoogleMapController controller = await controllerCompleter.future;
 
     await tester.pumpAndSettle();
-    // TODO(cyanglaz): Remove this after we added `mapRendered` callback, and `mapControllerCompleter.complete(controller)` above should happen
-    // in `mapRendered`.
-    // https://github.com/flutter/flutter/issues/54758
-    await Future.delayed(Duration(seconds: 1));
+    await onCameraIdleCompleter.future;
 
     final LatLngBounds visibleRegion = await controller.getVisibleRegion();
     final LatLng northWest = LatLng(
@@ -872,10 +882,14 @@ void main() {
   testWidgets('testResizeWidget', (WidgetTester tester) async {
     final Completer<GoogleMapController> controllerCompleter =
         Completer<GoogleMapController>();
+    final Completer<void> onCameraIdleCompleter = Completer<void>();
     final GoogleMap map = GoogleMap(
       initialCameraPosition: _kInitialCameraPosition,
       onMapCreated: (GoogleMapController controller) async {
         controllerCompleter.complete(controller);
+      },
+      onCameraIdle: () {
+        onCameraIdleCompleter.complete();
       },
     );
     await tester.pumpWidget(Directionality(
@@ -892,10 +906,7 @@ void main() {
                 body: SizedBox(height: 400, width: 400, child: map)))));
 
     await tester.pumpAndSettle();
-    // TODO(cyanglaz): Remove this after we added `mapRendered` callback, and `mapControllerCompleter.complete(controller)` above should happen
-    // in `mapRendered`.
-    // https://github.com/flutter/flutter/issues/54758
-    await Future.delayed(Duration(seconds: 1));
+    await onCameraIdleCompleter.future;
 
     // Simple call to make sure that the app hasn't crashed.
     final LatLngBounds bounds1 = await controller.getVisibleRegion();
